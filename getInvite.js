@@ -103,6 +103,14 @@ async function buildTransaction(actions) {
     return uri
 }
 
+async function serializeActions(actions) {
+    if (typeof(rpc) == 'undefined') {
+        setNode(default_node);
+    }
+    const serialized_actions = await eos.serializeActions(actions);
+    return serialized_actions;
+}
+
 const getit = async () => {
     try {
         invite = await getNextInvite("coinsacct112")
@@ -116,4 +124,4 @@ const getit = async () => {
 //getit()
 
 
-module.exports = { buildTransaction, setNode, getNextInvite }
+module.exports = { buildTransaction, setNode, getNextInvite, serializeActions }
