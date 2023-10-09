@@ -48,7 +48,7 @@ fastify.post('/join', async (request, reply) => {
 
     setNode(request.body.endpoint ?? 'https://mainnet.telos.net')
  
-    const secret = (await getNextInvite("coinsacct112")).secret
+    const secret = (await getNextInvite(request.body.sponsor)).secret
     console.log(`secret ${secret}`)
     const actions = [{
         account: onboardingContract,
