@@ -68,23 +68,24 @@ async function getNextInvite(account) {
   const file_path = `${data_path}/${account}/invites.csv`
   let output = ""
   let got_one = false
+  let got_line
   let rv = {}
   try {
     const invite_table = new nReadlines(file_path)
     let line_buf
     while (line_buf = invite_table.next()) { 
       const line = line_buf.toString('ascii')
+      if (line.length == 0) continue
       if (got_one || !validhex.includes(line[0])) {
-        //console.log(`skip ${line}`)
         output += line + "\n"
       } else {
         [rv.secret, rv.hash, rv.qty] = line.split(',')
         console.log(`${JSON.stringify(rv)}`)
         if ( await hash_used(`0x${rv.hash}`) ) {
-          console.log(`hash used: ${rv.hash}`)
+          //console.log(`hash already used: ${rv.hash}`)
         } else {
           got_one = true
-          output += line + "\n"
+          got_line = line
         }
       }
     }
@@ -96,6 +97,8 @@ async function getNextInvite(account) {
   } else {
     try {
       const file = await fs.open(file_path, "w")
+      // rotate the issued invite to bottom of table
+      output += got_line + "\n"
       await file.write(output)
       await file.close()
     } catch (error) {
