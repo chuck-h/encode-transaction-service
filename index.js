@@ -49,6 +49,9 @@ fastify.post('/join', async (request, reply) => {
     setNode(request.body.endpoint ?? 'https://mainnet.telos.net')
  
     const secret = (await getNextInvite(request.body.sponsor)).secret
+    if (secret == null) {
+      throw new Error(`no invites available from ${request.body.sponsor}`)
+    }
     console.log(`secret ${secret}`)
     const actions = [{
         account: onboardingContract,

@@ -42,6 +42,26 @@ function setNode(node) {
     } 
 }
 
+async function hash_used(hash) {
+  if (typeof(rpc) == 'undefined') {
+      setNode(default_node)
+  }
+  const resp = await rpc.get_table_rows({
+    json: true,
+    code: "join.seeds",
+    scope: "join.seeds",
+    table: "invites",
+    lower_bound: hash,
+    limit: 1,
+    key_type: "i256",
+    index_position: "2",
+    encode_type: "dec",
+  })
+  const res = await resp;
+  return (res.rows.length == 0 || res.rows[0].invite_secret != 0);  
+}
+
+
 const validhex = '0123456789abcdef'
 const data_path ="data"
 async function getNextInvite(account) {
@@ -59,8 +79,13 @@ async function getNextInvite(account) {
         output += line + "\n"
       } else {
         [rv.secret, rv.hash, rv.qty] = line.split(',')
-        //console.log(`${JSON.stringify(rv)}`)
-        got_one = true
+        console.log(`${JSON.stringify(rv)}`)
+        if ( await hash_used(`0x${rv.hash}`) ) {
+          console.log(`hash used: ${rv.hash}`)
+        } else {
+          got_one = true
+          output += line + "\n"
+        }
       }
     }
   } catch (error) {
