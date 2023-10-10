@@ -4,6 +4,7 @@ const fetch = require('node-fetch')
 const util = require('util')
 const zlib = require('zlib')
 const fs = require('fs').promises;
+const nReadlines = require('n-readlines');
 //const helper = require('./helper')
 
 const { SigningRequest } = require("eosio-signing-request")
@@ -49,8 +50,10 @@ async function getNextInvite(account) {
   let got_one = false
   let rv = {}
   try {
-    file = await fs.open(file_path)
-    for await (const line of file.readLines()) {
+    const invite_table = new nReadlines(file_path)
+    let line_buf
+    while (line_buf = invite_table.next()) { 
+      const line = line_buf.toString('ascii')
       if (got_one || !validhex.includes(line[0])) {
         //console.log(`skip ${line}`)
         output += line + "\n"
@@ -60,7 +63,6 @@ async function getNextInvite(account) {
         got_one = true
       }
     }
-    await file.close()
   } catch (error) {
     console.error(`Got an error trying to read ${file_path}: ${error.message}`);
   }
@@ -68,7 +70,7 @@ async function getNextInvite(account) {
     console.log(`no invites in file ${file_path}`)
   } else {
     try {
-      file = await fs.open(file_path, "w")
+      const file = await fs.open(file_path, "w")
       await file.write(output)
       await file.close()
     } catch (error) {
