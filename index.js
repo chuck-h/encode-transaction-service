@@ -2,7 +2,7 @@ const fastify = require('fastify')({ logger: true })
 fastify.register(require("fastify-blipp"));
 const path = require('path')
 
-const { buildTransaction, setNode } = require('./buildTransaction')
+const { buildTransaction, serializeActions, setNode } = require('./buildTransaction')
 const buildQrCode = require('./buildQrCode')
 const buildHusdAction = require('./buildHusdAction')
 
@@ -63,6 +63,16 @@ fastify.get('/buyseeds', async (request, reply) => {
     return {
         esr, qr
     }
+})
+
+fastify.post('/tx', async (request, reply) => {
+    const actions = request.body.actions
+
+    setNode(request.body.endpoint ?? 'https://mainnet.telos.net')
+    
+    const serialized_actions = await serializeActions(actions)
+
+    return serialized_actions;
 })
 
 fastify.post('/qr', async (request, reply) => {

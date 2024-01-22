@@ -65,4 +65,12 @@ async function buildTransaction(actions) {
     return uri
 }
 
-module.exports = { buildTransaction, setNode }
+async function serializeActions(actions) {
+    if (typeof(rpc) == 'undefined') {
+        setNode(default_node);
+    }
+    const serialized_actions = await eos.serializeActions(actions);
+    return serialized_actions;
+}
+
+module.exports = { buildTransaction, serializeActions, setNode }
