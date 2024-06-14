@@ -42,6 +42,50 @@ fastify.post('/qr', async (request, reply) => {
     }
 })
 
+fastify.get('/invoice', async (request, reply) => {
+
+    if (!request.query.to) {
+        throw Error("to needs to be defined")
+    }
+    if (!request.query.quantity) {
+        throw Error("quantity needs to be defined")
+    }
+    if (!request.query.memo) {
+        throw Error("memo needs to be defined")
+    }
+
+    let tokenContract = request.query.tokenContract || "token.seeds"
+    let digits = request.query.digitsPrecision || 4
+    let symbol = request.query.tokenSymbol || "SEEDS"
+    var quantity = parseFloat(request.query.quantity).toFixed(digits) + " " + symbol
+
+    const actions = [{
+        account: tokenContract,
+        name: "transfer",
+        authorization: [{
+            actor:"............1",
+            permission: "............2"
+        }
+        ],
+        data: {
+            from:"............1",
+            "to": request.query.to,
+            "quantity": quantity,
+            memo: request.query.memo
+        }
+    }]
+
+    const esr = await buildTransaction(actions)
+
+    const qrPath = await buildQrCode(esr)
+    
+    const qr = "https://" + request.hostname + "/" + qrPath
+
+    return {
+        esr, qr
+    }
+})
+
 const onboardingContract = "join.seeds"
 
 fastify.post('/join', async (request, reply) => {
