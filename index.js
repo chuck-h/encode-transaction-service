@@ -59,7 +59,7 @@ fastify.get('/invoice', async (request, reply) => {
     let symbol = request.query.tokenSymbol || "SEEDS"
     var quantity = parseFloat(request.query.quantity).toFixed(digits) + " " + symbol
 
-    const actions = [{
+    var actions = [{
         account: tokenContract,
         name: "transfer",
         authorization: [{
@@ -75,6 +75,23 @@ fastify.get('/invoice', async (request, reply) => {
         }
     }]
 
+    if (request.query.justonce) {
+        actions = [ ...actions, {
+        account: "doitjustonce",
+        name: "newevent",
+        authorization: [{
+            actor:"............1",
+            permission: "............2"
+        }
+        ],
+        data: {
+            "ram_payer": "............1",
+            "eventid": request.query.justonce,
+            "lifetime_sec": 30,
+        }
+        }]
+    }
+           
     const esr = await buildTransaction(actions)
 
     const qrPath = await buildQrCode(esr)
