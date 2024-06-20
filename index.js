@@ -78,16 +78,17 @@ fastify.get('/invoice', async (request, reply) => {
     if (request.query.justonce) {
         actions = [ ...actions, {
         account: "doitjustonce",
-        name: "newevent",
+        name: "antirepeat",
         authorization: [{
             actor:"............1",
             permission: "............2"
         }
         ],
         data: {
-            "ram_payer": "............1",
-            "eventid": request.query.justonce,
+            "nonce": request.query.justonce,
             "lifetime_sec": 30,
+            "scope": request.query.to,
+            "ram_payer": "............1",
         }
         }]
     }
