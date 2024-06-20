@@ -76,6 +76,10 @@ fastify.get('/invoice', async (request, reply) => {
     }]
 
     if (request.query.justonce) {
+        lifetime = 30
+        if (request.query.lifetime) {
+          lifetime = request.query.lifetime
+        }
         actions = [ ...actions, {
         account: "doitjustonce",
         name: "antirepeat",
@@ -86,7 +90,7 @@ fastify.get('/invoice', async (request, reply) => {
         ],
         data: {
             "nonce": request.query.justonce,
-            "lifetime_sec": 30,
+            "lifetime_sec": lifetime,
             "scope": request.query.to,
             "ram_payer": "............1",
         }
