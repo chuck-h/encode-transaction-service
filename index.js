@@ -28,16 +28,6 @@ fastify.post('/tx', async (request, reply) => {
     return serialized_actions;
 })
 
-fastify.post('/tx', async (request, reply) => {
-    const actions = request.body.actions
-
-    setNode(request.body.endpoint ?? 'https://mainnet.telos.net')
-    
-    const serialized_actions = await serializeActions(actions)
-
-    return serialized_actions;
-})
-
 fastify.post('/qr', async (request, reply) => {
     const actions = request.body.actions
 
@@ -65,6 +55,7 @@ fastify.get('/invoice', async (request, reply) => {
     if (!request.query.memo) {
         throw Error("memo needs to be defined")
     }
+    setNode(request.query.endpoint ?? 'https://mainnet.telos.net')
 
     let tokenContract = request.query.tokenContract || "token.seeds"
     let digits = request.query.digitsPrecision || 4
