@@ -20,7 +20,7 @@ In a PM2 environment
 ```
 pm2 start index.js
 ```
-Alternatively (?)
+Alternatively
 ```
 npm run start
 ```
@@ -28,10 +28,14 @@ npm run start
 ## API
 
 ```/qr``` for telos mainnet
-```/qrt``` for telos testnet
-
 
 send 'actions' json in the body to get the QR code
+```
+curl -H 'Content-Type: application/json' -X 'POST' 'http://127.0.0.1:3000/qr' -d '{ "actions":[{"account":"eosio.token","name":"transfer","data":{"from":"............1",
+"to":"myaccount","quantity":"1.0000 TLOS","memo":""},"authorization":[{
+"actor":"............1","permission":"............2"}]
+}] }'
+```
 
 
 ## Tools 
