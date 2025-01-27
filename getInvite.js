@@ -150,8 +150,114 @@ const getit = async () => {
     }
 }
 
+async function isFresh(contract, symbol, account, pristine=true) {
+  try {
+    const resp = await rpc.get_table_rows({
+      json: true,
+      code: contract,
+      scope: account,
+      table: "accounts",
+      limit: 100,
+    })
+    const res = await resp;
+    const balanceRow = res.rows.find(row => row.balance.includes(symbol));
+    return balanceRow === undefined || (!pristine && (parseInt(balanceRow.balance) == 0));
+  } catch(err) {
+    console.log(err);
+    return false;
+  }
+}
+
+async function getIssuerData(contract, symbol) {
+  try {
+    const resp = await rpc.get_table_rows({
+      json: true,
+      code: contract,
+      scope: symbol,
+      table: "stat",
+      limit: 100,
+    })
+    const res = await resp;
+    const sp = res.rows[0].supply.split(" ")[0].split(".");
+    var precision;
+    if (sp.length == 2) {
+      precision = sp[1].length
+    } else {
+      precision = 0;
+    }
+    return { issuer: res.rows[0].issuer, precision: precision };
+  } catch(err) {
+    console.log(err);
+    return null;
+  }
+
+}
+
+async function getInitData(initBody) {
+  if (typeof(rpc) == 'undefined') {
+      setNode(default_node)
+  }
+  var rv = {};
+  if(!(await isFresh(initBody.contract, initBody.symbol, initBody.account, initBody.pristine))) {
+    rv.err = `initializing ${initBody.account} for ${initBody.symbol}: account is not fresh`;
+    return rv;
+  }
+  var configRow;
+  try {
+    const resp = await rpc.get_table_rows({
+      json: true,
+      code: initBody.contract,
+      scope: initBody.symbol,
+      table: "configs",
+      limit: 1,
+    })
+    const res = await resp;
+    configRow = res.rows[0];
+  } catch (err) {
+    rv.err = `init data error ${err}`
+    return rv;
+  }
+  if (initBody.memtokens !== undefined) {
+    if (configRow.membership==null) {
+      rv.err = `no member symbol for ${initBody.symbol}`;
+      return rv;
+    }
+    if(!await isFresh(initBody.contract, configRow.membership, initBody.account, initBody.pristine)) {
+      rv.err = `initializing ${initBody.account} for member token ${configRow.membership}: account is not fresh`;
+      return rv;
+    }
+    rv.membership = configRow.membership;
+    rv.memberdata = await getIssuerData(initBody.contract, rv.membership);
+  }
+  if (initBody.credtokens !== undefined) {
+    if (configRow.cred_limit==null) {
+      rv.err = `no credit limit symbol for ${initBody.symbol}`;
+      return rv;
+    }
+    if(!await isFresh(initBody.contract, configRow.cred_limit, initBody.account, initBody.pristine)) {
+      rv.err = `initializing ${initBody.account} for credit limit token ${configRow.cred_limit}: account is not fresh`;
+      return rv;
+    }
+    rv.cred_limit = configRow.cred_limit;
+    rv.creddata = await getIssuerData(initBody.contract, rv.cred_limit);
+  }
+  if (initBody.maxtokens !== undefined) {
+    if (configRow.max_limit==null) {
+      rv.err = `no max limit symbol for ${initBody.symbol}`;
+      return rv;
+    }
+    if(!await isFresh(initBody.contract, configRow.max_limit, initBody.account, initBody.pristine)) {
+      rv.err = `initializing ${initBody.account} for max_limit token ${configRow.max_limit}: account is not fresh`;
+      return rv;
+    }
+    rv.max_limit = configRow.max_limit;
+    rv.maxdata = await getIssuerData(initBody.contract, rv.max_limit);
+  }
+  rv.tokendata = await getIssuerData(initBody.contract, initBody.symbol);
+  return rv;  
+}
 
 //getit()
 
 
-module.exports = { buildTransaction, setNode, getNextInvite, serializeActions }
+module.exports = { buildTransaction, setNode, getNextInvite, serializeActions, getInitData }
